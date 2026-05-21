@@ -44,6 +44,7 @@ basic_plus_plus/
   examples/         ← example programs in your language
   main.py           ← CLI entry point
 ```
+![basic_plus_plus_file_structure.svg](basic_plus_plus_file_structure.svg)
 
 ## Build phases
 ![compiler_build_blueprint.svg](compiler_build_blueprint.svg)
