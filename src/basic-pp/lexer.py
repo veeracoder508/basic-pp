@@ -63,6 +63,8 @@ class Lexer:
 
     def read_number(self) -> str:
         start = self.pos
+        start_line = self.line
+        start_col = self.column
         ch = self.current_char()
         # handle 0x, 0b, 0o prefixes
         if ch == '0' and self.peek().lower() in ('x', 'b', 'o'):
@@ -77,7 +79,7 @@ class Lexer:
                 valid = '01234567'
             while self.current_char() in valid:
                 self.advance()
-            return self.source_code[start:self.pos]
+            return self.source_code[start:self.pos], start_line, start_col
 
         # decimal/float
         has_dot = False
@@ -91,27 +93,30 @@ class Lexer:
                 self.advance()
                 continue
             break
-        return self.source_code[start:self.pos]
+        return self.source_code[start:self.pos], start_line, start_col
 
     def read_identifier_or_keyword(self) -> str:
         start = self.pos
+        start_line = self.line
+        start_col = self.column
         while True:
             ch = self.current_char()
             if ch.isalnum() or ch == '_':
                 self.advance()
                 continue
             break
-        return self.source_code[start:self.pos]
+        return self.source_code[start:self.pos], start_line, start_col
 
     def read_string(self, quote: str) -> str:
         # assume current char is opening quote
+        start_line = self.line
+        start_col = self.column
         self.advance()  # consume opening quote
-        start = self.pos
         chars = []
         while True:
             ch = self.current_char()
             if ch == '\0':
-                raise Exception('Unterminated string')
+                raise Exception(f"Unterminated string starting at {start_line}:{start_col}")
             if ch == '\\':
                 self.advance()
                 esc = self.current_char()
@@ -130,7 +135,7 @@ class Lexer:
                 break
             chars.append(ch)
             self.advance()
-        return ''.join(chars)
+        return ''.join(chars), start_line, start_col
 
     def tokenize(self) -> List[Token]:
         single_char_delims = {
@@ -147,7 +152,7 @@ class Lexer:
         }
 
         # operators of varying lengths, try longest first
-        multi_ops = ['===', '!==', '==', '!=', '>=', '<=', '&&', '||', '<<', '>>', '+=', '-=', '*=', '/=', '%=', '**=', '->', '**']
+        multi_ops = ['==', '!=', '=', '!=', '>=', '<=', '&&', '||', '<<', '>>', '+=', '-=', '*=', '/=', '%=', '**=', '->', '**']
 
         while self.pos < self.length:
             self.skip_whitespace()
@@ -157,37 +162,50 @@ class Lexer:
 
             # delimiters
             if ch in single_char_delims:
+                start_line, start_col = self.line, self.column
                 self.add_token(single_char_delims[ch], ch)
+                # adjust token position to the starting location
+                self.tokens[-1].line = start_line
+                self.tokens[-1].column = start_col
                 self.advance()
                 continue
 
             # numbers
             if ch.isdigit():
-                num = self.read_number()
+                num, sline, scol = self.read_number()
                 self.add_token(TokenType.VALUE, num)
+                self.tokens[-1].line = sline
+                self.tokens[-1].column = scol
                 continue
 
             # identifiers / keywords
             if ch.isalpha() or ch == '_':
-                ident = self.read_identifier_or_keyword()
+                ident, sline, scol = self.read_identifier_or_keyword()
                 # check keywords
                 if ident.upper() in Keywords.__members__:
                     self.add_token(TokenType.KEYWORD, ident)
                 else:
                     self.add_token(TokenType.IDENTIFIER, ident)
+                self.tokens[-1].line = sline
+                self.tokens[-1].column = scol
                 continue
 
             # strings and chars
             if ch == '"' or ch == "'":
-                s = self.read_string(ch)
+                s, sline, scol = self.read_string(ch)
                 self.add_token(TokenType.VALUE, s)
+                self.tokens[-1].line = sline
+                self.tokens[-1].column = scol
                 continue
 
             # operators (try multi-char)
             matched = False
             for op in sorted(multi_ops, key=len, reverse=True):
                 if self.source_code.startswith(op, self.pos):
+                    sline, scol = self.line, self.column
                     self.add_token(TokenType.OPERATOR, op)
+                    self.tokens[-1].line = sline
+                    self.tokens[-1].column = scol
                     self.advance(len(op))
                     matched = True
                     break
@@ -196,7 +214,10 @@ class Lexer:
 
             # single-char operators (default to OPERATOR)
             if ch in '+-*/%<>=!&|^~':
+                sline, scol = self.line, self.column
                 self.add_token(TokenType.OPERATOR, ch)
+                self.tokens[-1].line = sline
+                self.tokens[-1].column = scol
                 self.advance()
                 continue
 
@@ -205,5 +226,7 @@ class Lexer:
 
         # EOF token
         self.add_token(TokenType.EOF, '')
+        self.tokens[-1].line = self.line
+        self.tokens[-1].column = self.column
         return self.tokens
 
