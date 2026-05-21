@@ -1,27 +1,4 @@
-import types
-import sys
-import importlib.util
-import pytest
-import pathlib
-
-
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-SRC = ROOT / 'src' / 'basic-pp'
-
-pkg_name = 'basic_pp'              # synthetic package name (valid identifier)
-pkg = types.ModuleType(pkg_name)
-pkg.__path__ = [str(SRC)]
-sys.modules[pkg_name] = pkg
-
-def load_module_as_package(modname, path):
-    fullname = f'{pkg_name}.{modname}'
-    spec = importlib.util.spec_from_file_location(fullname, str(path))
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    sys.modules[fullname] = mod
-    return mod
-
-ast_mod = load_module_as_package('astmod', SRC / 'ast.py')
+from basicpp import ast as ast_mod
 
 
 def test_compile_assignment_and_print_bytecode():

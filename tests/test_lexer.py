@@ -1,8 +1,4 @@
-import types
-import sys
-import importlib.util
 import pytest
-import pathlib
 from basicpp import tokens as tokens_mod
 from basicpp import lexer as lexer_mod
 
