@@ -1,5 +1,6 @@
+import os
 from dataclasses import dataclass
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Dict
 from .tokens import Token, TokenType, Keywords
 from .lexer import Lexer
 
@@ -248,7 +249,7 @@ class Emitter:
 		}
 
 
-def compile_source(source: str) -> dict:
+def compile_source(source: str) -> Dict[str, List[Tuple[str, Any]] | List[Any] | List[str]]:
 	lexer = Lexer(source)
 	tokens = lexer.tokenize()
 	parser = Parser(tokens)
@@ -258,8 +259,16 @@ def compile_source(source: str) -> dict:
 	return emitter.assemble()
 
 
+def write_bytecode_to_file(file_name: str, content: Dict[str, List[Tuple[str, Any]] | List[Any] | List[str]]):
+	os.makedirs("__basicpp__", exist_ok=True)
+	with open(f"__basicpp__/{file_name}", 'w', encoding='utf-8') as f:
+		for i, (op, arg) in enumerate(content.get('code', [])):
+			arg_str = str(arg) if arg is not None else ""
+			f.write(f"{i*2:>4} {op:<20} {arg_str}\n")
+
 if __name__ == '__main__':
 	# tiny self-test
 	src = 'x = 1 + 2 * 3 ; PRINT x ;'
 	bc = compile_source(src)
 	print(bc)
+	write_bytecode_to_file('test.bc', bc) # Test the bytecode file

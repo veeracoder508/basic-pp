@@ -230,3 +230,14 @@ class Lexer:
         self.tokens[-1].column = self.column
         return self.tokens
 
+def main():
+    src = 'x = 1 + 2 * 3 ; PRINT x ;'
+
+    lex = Lexer(src)
+    toks = lex.tokenize()
+
+    print(toks)
+
+
+if __name__ == "__main__":
+    main()
