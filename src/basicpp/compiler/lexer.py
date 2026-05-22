@@ -190,6 +190,19 @@ class Lexer:
                 self.tokens[-1].column = scol
                 continue
 
+            # type markers like $STRING
+            if ch == '$':
+                start_line, start_col = self.line, self.column
+                # consume '$'
+                self.advance()
+                ident, sline, scol = self.read_identifier_or_keyword()
+                val = '$' + ident
+                self.add_token(TokenType.KEYWORD, val)
+                # set token position to where $ started
+                self.tokens[-1].line = start_line
+                self.tokens[-1].column = start_col
+                continue
+
             # strings and chars
             if ch == '"' or ch == "'":
                 s, sline, scol = self.read_string(ch)

@@ -1,0 +1,5 @@
+START ;
+INPUT name $STRING ;
+PRINT "Enter your name:" ;
+PRINT "Hello,", name ;
+END ;

@@ -1,0 +1,4 @@
+START ;
+SET age $INT = 30 ;
+PRINT "Age:", age ;
+END ;

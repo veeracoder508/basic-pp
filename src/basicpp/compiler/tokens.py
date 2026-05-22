@@ -3,6 +3,10 @@ from enum import StrEnum, auto
 
 class Keywords(StrEnum):
     """Enum representing reserved keywords in basic-pp."""
+    START = auto()
+    END = auto()
+    SET = auto()
+    INPUT = auto()
     IF = auto()
     ELSE = auto()
     WHILE = auto()

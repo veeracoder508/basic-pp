@@ -44,6 +44,12 @@ class Program:
 	body: List[Any]
 
 
+@dataclass
+class Input:
+	target: Identifier
+	dtype: str | None = None
+
+
 # --- Parser ---
 class ParseError(Exception):
 	pass
@@ -74,9 +80,22 @@ class Parser:
 	def parse(self) -> Program:
 		stmts = []
 		while self.current().type != TokenType.EOF:
-			if self.current().type == TokenType.KEYWORD and self.current().value.upper() == 'PRINT':
-				stmts.append(self.parse_print())
-				continue
+			# handle keyword statements
+			if self.current().type == TokenType.KEYWORD:
+				kw = self.current().value.upper()
+				if kw == 'PRINT':
+					stmts.append(self.parse_print())
+					continue
+				if kw == 'SET':
+					stmts.append(self.parse_set())
+					continue
+				if kw == 'INPUT':
+					stmts.append(self.parse_input())
+					continue
+				# START/END are program markers in the grammar; ignore them
+				if kw in ('START', 'END'):
+					self.advance()
+					continue
 			if self.current().type == TokenType.IDENTIFIER:
 				# assignment if followed by operator '='
 				look = self.tokens[self.pos + 1] if (self.pos + 1) < len(self.tokens) else None
@@ -117,6 +136,44 @@ class Parser:
 			tok = self.current()
 			raise ParseError(f"Expected ';' after assignment at {tok.line}:{tok.column}")
 		return Assign(target, value)
+
+	def parse_set(self) -> Assign:
+		# SET <identifier> [$TYPE] = <expr> ;
+		self.expect(TokenType.KEYWORD, self.current().value)
+		ident_tok = self.expect(TokenType.IDENTIFIER)
+		target = Identifier(ident_tok.value)
+		# optional type token like $STRING
+		dtype = None
+		if self.current().type == TokenType.KEYWORD and isinstance(self.current().value, str) and self.current().value.startswith('$'):
+			dtype = self.current().value
+			self.advance()
+		# expect '='
+		self.expect(TokenType.OPERATOR, '=')
+		value = self.parse_expr()
+		# semicolon
+		if self.current().type == TokenType.DELIMITER and self.current().value == ';':
+			self.advance()
+		else:
+			tok = self.current()
+			raise ParseError(f"Expected ';' after SET at {tok.line}:{tok.column}")
+		return Assign(target, value)
+
+	def parse_input(self) -> Input:
+		# INPUT <identifier> [$TYPE] ;
+		self.expect(TokenType.KEYWORD, self.current().value)
+		ident_tok = self.expect(TokenType.IDENTIFIER)
+		target = Identifier(ident_tok.value)
+		dtype = None
+		if self.current().type == TokenType.KEYWORD and isinstance(self.current().value, str) and self.current().value.startswith('$'):
+			dtype = self.current().value
+			self.advance()
+		# semicolon
+		if self.current().type == TokenType.DELIMITER and self.current().value == ';':
+			self.advance()
+		else:
+			tok = self.current()
+			raise ParseError(f"Expected ';' after INPUT at {tok.line}:{tok.column}")
+		return Input(target, dtype)
 
 	# Expression parsing (simple precedence)
 	def parse_expr(self):
@@ -217,6 +274,10 @@ class Emitter:
 			self.compile(node.value)
 			idx = self.add_name(node.target.name)
 			self.emit('STORE_NAME', node.target.name)
+		elif isinstance(node, Input):
+			# emit a READ_INPUT opcode which leaves input value on stack, then store
+			self.emit('READ_INPUT', node.target.name)
+			self.emit('STORE_NAME', node.target.name)
 		elif isinstance(node, Print):
 			for v in node.values:
 				self.compile(v)
@@ -268,7 +329,10 @@ def write_bytecode_to_file(file_name: str, content: Dict[str, List[Tuple[str, An
 
 if __name__ == '__main__':
 	# tiny self-test
-	src = 'x = 1 + 2 * 3 ; PRINT x ;'
+	src = """START
+x = 1 + 2 * 3 ; 
+PRINT x ;
+END"""
 	bc = compile_source(src)
 	print(bc)
 	write_bytecode_to_file('test.bc', bc) # Test the bytecode file
