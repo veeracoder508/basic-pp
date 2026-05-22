@@ -1,4 +1,4 @@
-from basicpp import ast as ast_mod
+from basicpp import ast_a as ast_mod
 
 
 def test_compile_assignment_and_print_bytecode():
