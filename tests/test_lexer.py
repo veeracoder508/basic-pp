@@ -1,6 +1,6 @@
 import pytest
-from basicpp import tokens as tokens_mod
-from basicpp import lexer as lexer_mod
+from basicpp.compiler import tokens as tokens_mod
+from basicpp.compiler import lexer as lexer_mod
 
 
 def test_simple_tokens_and_positions():
