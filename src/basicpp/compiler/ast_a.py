@@ -1,3 +1,9 @@
+"""
+AST and Parser implementation for Basic++.
+This module handles the construction of the Abstract Syntax Tree from tokens
+and provides an Emitter to generate stack-based bytecode.
+"""
+
 import os
 from dataclasses import dataclass
 from typing import Any, List, Tuple, Dict
@@ -41,14 +47,44 @@ class Print:
 
 @dataclass
 class Program:
-	body: List[Any]
+    body: List[Any]
 
 
 @dataclass
 class Input:
-	target: Identifier
-	dtype: str | None = None
+    target: Identifier
+    dtype: str | None = None
 
+@dataclass
+class IfStmt:
+    condition: Any
+    then_block: List[Any]
+    else_block: List[Any] | None = None
+
+@dataclass
+class ForStmt:
+    variable: Identifier
+    start_val: Any
+    end_val: Any
+    step_val: Any
+    body: List[Any]
+
+@dataclass
+class GotoStmt:
+    label: str
+
+@dataclass
+class LabelStmt:
+    name: str
+
+@dataclass
+class UnaryOp:
+    op: str
+    right: Any
+
+@dataclass
+class Boolean:
+    value: bool
 
 # --- Parser ---
 class ParseError(Exception):
@@ -92,6 +128,15 @@ class Parser:
 				if kw == 'INPUT':
 					stmts.append(self.parse_input())
 					continue
+				if kw == 'IF':
+					stmts.append(self.parse_if())
+					continue
+				if kw == 'FOR':
+					stmts.append(self.parse_for())
+					continue
+				if kw == 'GOTO':
+					stmts.append(self.parse_goto())
+					continue
 				# START/END are program markers in the grammar; ignore them
 				if kw in ('START', 'END'):
 					self.advance()
@@ -102,7 +147,11 @@ class Parser:
 				if look and look.type == TokenType.OPERATOR and look.value == '=':
 					stmts.append(self.parse_assign())
 					continue
-			# skip unknown/standalone tokens by advancing to avoid infinite loop
+				# Label check: <name>:
+				if look and look.type == TokenType.DELIMITER and look.value == ':':
+					stmts.append(self.parse_label())
+					continue
+
 			raise ParseError(f"Unexpected token {self.current().value} at {self.current().line}:{self.current().column}")
 		return Program(stmts)
 
@@ -175,17 +224,139 @@ class Parser:
 			raise ParseError(f"Expected ';' after INPUT at {tok.line}:{tok.column}")
 		return Input(target, dtype)
 
-	# Expression parsing (simple precedence)
+	def parse_if(self) -> IfStmt:
+		self.expect(TokenType.KEYWORD, 'IF')
+		condition = self.parse_expr()
+		self.expect(TokenType.KEYWORD, 'THEN')
+		
+		then_block = []
+		else_block = None
+		
+		# Check for single-line vs block-style IF
+		# This is a simplified check: if NEXT token isn't a newline/terminator, assume single line
+		# For this implementation, we follow method 2 from GRAMMER.md (Block style)
+		while not (self.current().type == TokenType.KEYWORD and self.current().value.upper() in ('ELSE', 'ENDIF')):
+			then_block.append(self.parse_statement())
+			
+		if self.current().type == TokenType.KEYWORD and self.current().value.upper() == 'ELSE':
+			self.advance()
+			else_block = []
+			while not (self.current().type == TokenType.KEYWORD and self.current().value.upper() == 'ENDIF'):
+				else_block.append(self.parse_statement())
+		
+		self.expect(TokenType.KEYWORD, 'ENDIF')
+		self.expect(TokenType.DELIMITER, ';')
+		return IfStmt(condition, then_block, else_block)
+
+	def parse_for(self) -> ForStmt:
+		self.expect(TokenType.KEYWORD, 'FOR')
+		var_tok = self.expect(TokenType.IDENTIFIER)
+		self.expect(TokenType.OPERATOR, '=')
+		start_val = self.parse_expr()
+		self.expect(TokenType.KEYWORD, 'TO')
+		end_val = self.parse_expr()
+		
+		step_val = Number(1) # default step
+		if self.current().type == TokenType.KEYWORD and self.current().value.upper() == 'STEP':
+			self.advance()
+			step_val = self.parse_expr()
+			
+		body = []
+		while not (self.current().type == TokenType.KEYWORD and self.current().value.upper() == 'NEXT'):
+			body.append(self.parse_statement())
+			
+		self.expect(TokenType.KEYWORD, 'NEXT')
+		self.expect(TokenType.IDENTIFIER, var_tok.value)
+		self.expect(TokenType.DELIMITER, ';')
+		return ForStmt(Identifier(var_tok.value), start_val, end_val, step_val, body)
+
+	def parse_goto(self) -> GotoStmt:
+		self.expect(TokenType.KEYWORD, 'GOTO')
+		label_tok = self.expect(TokenType.IDENTIFIER)
+		self.expect(TokenType.DELIMITER, ';')
+		return GotoStmt(label_tok.value)
+
+	def parse_label(self) -> LabelStmt:
+		name_tok = self.expect(TokenType.IDENTIFIER)
+		self.expect(TokenType.DELIMITER, ':')
+		return LabelStmt(name_tok.value)
+
+	def parse_statement(self):
+		# Helper to parse a single statement inside blocks
+		kw_map = {'PRINT': self.parse_print, 'SET': self.parse_set, 'INPUT': self.parse_input, 'GOTO': self.parse_goto}
+		if self.current().type == TokenType.KEYWORD:
+			func = kw_map.get(self.current().value.upper())
+			if func: return func()
+		if self.current().type == TokenType.IDENTIFIER:
+			return self.parse_assign()
+		raise ParseError(f"Expected statement at {self.current().line}:{self.current().column}")
+
+	# --- Expression parsing with Precedence ---
 	def parse_expr(self):
-		return self.parse_term()
+		return self.parse_logical_or()
+
+	def parse_logical_or(self):
+		node = self.parse_logical_and()
+		while self.current().type == TokenType.OPERATOR and self.current().value == '||':
+			op = self.current().value
+			self.advance()
+			node = BinOp(node, op, self.parse_logical_and())
+		return node
+
+	def parse_logical_and(self):
+		node = self.parse_bitwise_or()
+		while self.current().type == TokenType.OPERATOR and self.current().value == '&&':
+			op = self.current().value
+			self.advance()
+			node = BinOp(node, op, self.parse_bitwise_or())
+		return node
+
+	def parse_bitwise_or(self):
+		node = self.parse_bitwise_xor()
+		while self.current().type == TokenType.OPERATOR and self.current().value == '|':
+			op = self.current().value
+			self.advance()
+			node = BinOp(node, op, self.parse_bitwise_xor())
+		return node
+
+	def parse_bitwise_xor(self):
+		node = self.parse_bitwise_and()
+		while self.current().type == TokenType.OPERATOR and self.current().value == '^':
+			op = self.current().value
+			self.advance()
+			node = BinOp(node, op, self.parse_bitwise_and())
+		return node
+
+	def parse_bitwise_and(self):
+		node = self.parse_equality()
+		while self.current().type == TokenType.OPERATOR and self.current().value == '&':
+			op = self.current().value
+			self.advance()
+			node = BinOp(node, op, self.parse_equality())
+		return node
+
+	def parse_equality(self):
+		node = self.parse_comparison()
+		while self.current().type == TokenType.OPERATOR and self.current().value in ('==', '!='):
+			op = self.current().value
+			self.advance()
+			node = BinOp(node, op, self.parse_comparison())
+		return node
+
+	def parse_comparison(self):
+		node = self.parse_term()
+		while self.current().type == TokenType.OPERATOR and self.current().value in ('>', '<', '>=', '<='):
+			op = self.current().value
+			self.advance()
+			node = BinOp(node, op, self.parse_term())
+		return node
 
 	def parse_term(self):
 		node = self.parse_factor()
 		while self.current().type == TokenType.OPERATOR and self.current().value in ('+', '-'):
 			op = self.current().value
 			self.advance()
-			right = self.parse_factor()
-			node = BinOp(node, op, right)
+			node = BinOp(node, op, self.parse_factor())
 		return node
 
 	def parse_factor(self):
@@ -193,26 +364,27 @@ class Parser:
 		while self.current().type == TokenType.OPERATOR and self.current().value in ('*', '/', '%'):
 			op = self.current().value
 			self.advance()
-			right = self.parse_unary()
-			node = BinOp(node, op, right)
+			node = BinOp(node, op, self.parse_unary())
 		return node
 
 	def parse_unary(self):
-		if self.current().type == TokenType.OPERATOR and self.current().value in ('+', '-'):
+		if self.current().type == TokenType.OPERATOR and self.current().value in ('+', '-', '!', '~'):
 			op = self.current().value
 			self.advance()
-			node = self.parse_unary()
-			return BinOp(Number(0), op, node)
+			return UnaryOp(op, self.parse_unary())
 		return self.parse_primary()
 
 	def parse_primary(self):
 		tok = self.current()
+		if tok.type == TokenType.KEYWORD:
+			if tok.value.upper() == 'TRUE':
+				self.advance(); return Boolean(True)
+			if tok.value.upper() == 'FALSE':
+				self.advance(); return Boolean(False)
+
 		if tok.type == TokenType.VALUE:
-			# try numeric
 			val = tok.value
 			self.advance()
-			# determine numeric or string
-			# strings from lexer are unquoted; numbers are numeric literals
 			try:
 				if isinstance(val, str) and val.startswith(('0x', '0X')):
 					num = int(val, 16)
@@ -275,9 +447,23 @@ class Emitter:
 			idx = self.add_name(node.target.name)
 			self.emit('STORE_NAME', node.target.name)
 		elif isinstance(node, Input):
-			# emit a READ_INPUT opcode which leaves input value on stack, then store
 			self.emit('READ_INPUT', node.target.name)
 			self.emit('STORE_NAME', node.target.name)
+		elif isinstance(node, IfStmt):
+			self.compile(node.condition)
+			self.emit('JUMP_IF_FALSE', 'ELSE_OR_ENDIF')
+			for stmt in node.then_block: self.compile(stmt)
+			if node.else_block:
+				self.emit('JUMP', 'ENDIF')
+				self.emit('LABEL', 'ELSE')
+				for stmt in node.else_block: self.compile(stmt)
+				self.emit('LABEL', 'ENDIF')
+			else:
+				self.emit('LABEL', 'ELSE_OR_ENDIF')
+		elif isinstance(node, LabelStmt):
+			self.emit('LABEL', node.name)
+		elif isinstance(node, GotoStmt):
+			self.emit('JUMP', node.label)
 		elif isinstance(node, Print):
 			for v in node.values:
 				self.compile(v)
@@ -286,16 +472,24 @@ class Emitter:
 		elif isinstance(node, BinOp):
 			self.compile(node.left)
 			self.compile(node.right)
-			opmap = {'+': 'BINARY_ADD', '-': 'BINARY_SUBTRACT', '*': 'BINARY_MULTIPLY', '/': 'BINARY_TRUE_DIVIDE', '%': 'BINARY_MODULO'}
+			opmap = {
+				'+': 'BINARY_ADD', '-': 'BINARY_SUBTRACT', '*': 'BINARY_MULTIPLY', 
+				'/': 'BINARY_TRUE_DIVIDE', '%': 'BINARY_MODULO', '==': 'COMPARE_EQ',
+				'!=': 'COMPARE_NEQ', '>': 'COMPARE_GT', '<': 'COMPARE_LT',
+				'>=': 'COMPARE_GTE', '<=': 'COMPARE_LTE', '&&': 'LOGICAL_AND', '||': 'LOGICAL_OR'
+			}
 			opname = opmap.get(node.op)
 			if not opname:
 				raise Exception(f'Unsupported binary op {node.op}')
 			self.emit(opname, None)
-		elif isinstance(node, Number):
+		elif isinstance(node, UnaryOp):
+			self.compile(node.right)
+			opmap = {'-': 'UNARY_NEGATIVE', '+': 'UNARY_POSITIVE', '!': 'UNARY_NOT', '~': 'UNARY_INVERT'}
+			self.emit(opmap[node.op], None)
+		elif isinstance(node, (Number, String)):
 			idx = self.add_const(node.value)
 			self.emit('LOAD_CONST', node.value)
-		elif isinstance(node, String):
-			idx = self.add_const(node.value)
+		elif isinstance(node, Boolean):
 			self.emit('LOAD_CONST', node.value)
 		elif isinstance(node, Identifier):
 			self.emit('LOAD_NAME', node.name)

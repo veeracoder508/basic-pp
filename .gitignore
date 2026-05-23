@@ -10,7 +10,7 @@ wheels/
 .venv
 
 # pytest
-.pytest_cashe/
+.pytest_cache/
 
 # basicpp
 __basicpp__/
