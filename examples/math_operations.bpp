@@ -1,0 +1,11 @@
+// Basic Math Operations in Basic++
+START
+SET a $INT = 20 ;
+SET b $INT = 4 ;
+
+PRINT "Addition:", a + b ;
+PRINT "Subtraction:", a - b ;
+PRINT "Multiplication:", a * b ;
+PRINT "Division:", a / b ;
+PRINT "Modulus:", a % b ;
+END

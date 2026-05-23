@@ -1,0 +1,14 @@
+// Demonstrating IF-THEN-ELSE and Comparisons
+START
+SET score $INT = 85 ;
+
+PRINT "Your score is:", score ;
+
+IF score >= 90 THEN
+    PRINT "Grade: A" ;
+ELSE
+    IF score >= 80 THEN
+        PRINT "Grade: B" ;
+    ENDIF ;
+ENDIF ;
+END

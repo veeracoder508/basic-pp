@@ -11,7 +11,7 @@ class Keywords(StrEnum):
     START = auto()
     END = auto()
     SET = auto()
-    INPUT = auto()
+    INPUT = auto()ed
     IF = auto()
     THEN = auto()
     ELSE = auto()
