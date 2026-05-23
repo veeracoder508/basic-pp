@@ -1,7 +1,14 @@
+[build-system]
+requires = ["uv-build>=0.1.0"]
+build-backend = "uv_build"
+
 [project]
 name = "basic-pp"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.0.0"
+authors = [
+  { name="R A Veeraragavan", email="veeracoder123@gmail.com" },
+]
+description = "a simple language for begginers."
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
@@ -10,6 +17,16 @@ dependencies = [
     "rich>=15.0.0",
     "zensical>=0.0.43",
 ]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+
+[project.urls]
+Homepage = "https://github.com/veeracoder508/e2eeftp"
+Issues = "https://github.com/veeracoder508/e2eeftp/issues"
 
 [tool.uv.workspace]
 members = [
@@ -24,3 +41,6 @@ basic-pp = { workspace = true }
 dev = [
     "basic-pp",
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
