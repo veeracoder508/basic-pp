@@ -5,6 +5,7 @@ and provides an Emitter to generate stack-based bytecode.
 """
 
 import os
+from pprint import pprint
 from dataclasses import dataclass
 from typing import Any, List, Tuple, Dict
 from .tokens import Token, TokenType, Keywords
@@ -344,8 +345,16 @@ class Parser:
 		return node
 
 	def parse_comparison(self):
-		node = self.parse_term()
+		node = self.parse_shift()
 		while self.current().type == TokenType.OPERATOR and self.current().value in ('>', '<', '>=', '<='):
+			op = self.current().value
+			self.advance()
+			node = BinOp(node, op, self.parse_shift())
+		return node
+
+	def parse_shift(self):
+		node = self.parse_term()
+		while self.current().type == TokenType.OPERATOR and self.current().value in ('<<', '>>'):
 			op = self.current().value
 			self.advance()
 			node = BinOp(node, op, self.parse_term())
@@ -360,8 +369,16 @@ class Parser:
 		return node
 
 	def parse_factor(self):
-		node = self.parse_unary()
+		node = self.parse_power()
 		while self.current().type == TokenType.OPERATOR and self.current().value in ('*', '/', '%'):
+			op = self.current().value
+			self.advance()
+			node = BinOp(node, op, self.parse_power())
+		return node
+
+	def parse_power(self):
+		node = self.parse_unary()
+		while self.current().type == TokenType.OPERATOR and self.current().value == '**':
 			op = self.current().value
 			self.advance()
 			node = BinOp(node, op, self.parse_unary())
@@ -451,15 +468,20 @@ class Emitter:
 			self.emit('STORE_NAME', node.target.name)
 		elif isinstance(node, IfStmt):
 			self.compile(node.condition)
-			self.emit('JUMP_IF_FALSE', 'ELSE_OR_ENDIF')
+			label_suffix = str(id(node))
+			else_label = f"ELSE_{label_suffix}"
+			endif_label = f"ENDIF_{label_suffix}"
+			
+			self.emit('JUMP_IF_FALSE', else_label if node.else_block else endif_label)
 			for stmt in node.then_block: self.compile(stmt)
+			
 			if node.else_block:
-				self.emit('JUMP', 'ENDIF')
-				self.emit('LABEL', 'ELSE')
+				self.emit('JUMP', endif_label)
+				self.emit('LABEL', else_label)
 				for stmt in node.else_block: self.compile(stmt)
-				self.emit('LABEL', 'ENDIF')
+				self.emit('LABEL', endif_label)
 			else:
-				self.emit('LABEL', 'ELSE_OR_ENDIF')
+				self.emit('LABEL', endif_label)
 		elif isinstance(node, LabelStmt):
 			self.emit('LABEL', node.name)
 		elif isinstance(node, GotoStmt):
@@ -476,7 +498,10 @@ class Emitter:
 				'+': 'BINARY_ADD', '-': 'BINARY_SUBTRACT', '*': 'BINARY_MULTIPLY', 
 				'/': 'BINARY_TRUE_DIVIDE', '%': 'BINARY_MODULO', '==': 'COMPARE_EQ',
 				'!=': 'COMPARE_NEQ', '>': 'COMPARE_GT', '<': 'COMPARE_LT',
-				'>=': 'COMPARE_GTE', '<=': 'COMPARE_LTE', '&&': 'LOGICAL_AND', '||': 'LOGICAL_OR'
+				'>=': 'COMPARE_GTE', '<=': 'COMPARE_LTE', '&&': 'LOGICAL_AND', '||': 'LOGICAL_OR',
+				'&': 'BINARY_AND', '|': 'BINARY_OR', '^': 'BINARY_XOR',
+				'<<': 'BINARY_LSHIFT', '>>': 'BINARY_RSHIFT',
+				'**': 'BINARY_POWER'
 			}
 			opname = opmap.get(node.op)
 			if not opname:
@@ -521,12 +546,20 @@ def write_bytecode_to_file(file_name: str, content: Dict[str, List[Tuple[str, An
 			arg_str = str(arg) if arg is not None else ""
 			f.write(f"{i*2:>4} {op:<20} {arg_str}\n")
 
-if __name__ == '__main__':
+
+def main():
 	# tiny self-test
 	src = """START
 x = 1 + 2 * 3 ; 
 PRINT x ;
+PRINT x == x ;
 END"""
+	print("==== SOURCE ===")
+	print(src)
+	print("==== BYTECODE ===")
 	bc = compile_source(src)
-	print(bc)
+	pprint(bc)
 	write_bytecode_to_file('test.bc', bc) # Test the bytecode file
+
+if __name__ == '__main__':
+	main()

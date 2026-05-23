@@ -6,6 +6,7 @@ producing a stream of tokens, which are then used by the parser.
 
 from .tokens import *
 from typing import List, Tuple
+from pprint import pprint
 
 
 class Lexer:
@@ -331,12 +332,12 @@ class Lexer:
         return self.tokens
 
 def main():
-    src = 'x = 1 + 2 * 3 ; PRINT x ;'
+    src = 'x = 1 + 2 * 3 ; PRINT x ; PRINT 1 == 1 ;'
 
     lex = Lexer(src)
     toks = lex.tokenize()
 
-    print(toks)
+    pprint(toks)
 
 
 if __name__ == "__main__":

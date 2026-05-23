@@ -5,15 +5,6 @@ from pathlib import Path
 from typing import List, Tuple
 from rich.logging import RichHandler
 
-# Try to import the built-in tomllib (Python 3.11+), fallback to tomli
-try:
-    import tomllib
-except ImportError:
-    try:
-        import tomli as tomllib
-    except ImportError:
-        tomllib = None
-
 # ---------------------------------------------------------
 # Logging Configuration
 # ---------------------------------------------------------
@@ -24,6 +15,16 @@ logging.basicConfig(
     handlers=[RichHandler(rich_tracebacks=True, show_path=False)]
 )
 logger = logging.getLogger("build_script")
+
+# Try to import the built-in tomllib (Python 3.11+), fallback to tomli
+try:
+    import tomllib
+except ImportError:
+    logger.warning("python version is low, trying tomli...")
+    try:
+        import tomli as tomllib
+    except ImportError:
+        tomllib = None
 
 
 # ---------------------------------------------------------

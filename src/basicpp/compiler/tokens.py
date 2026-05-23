@@ -11,7 +11,7 @@ class Keywords(StrEnum):
     START = auto()
     END = auto()
     SET = auto()
-    INPUT = auto()ed
+    INPUT = auto()
     IF = auto()
     THEN = auto()
     ELSE = auto()
@@ -52,12 +52,12 @@ class DataTypes(StrEnum):
 
 class ArithmaticOperator(StrEnum): 
     """Enum representing arithmetic operators in basic-pp."""
-    PLUS = auto()     # +
-    MINUS = auto()    # -
-    MULTIPLY = auto() # *
-    DIVIDE = auto()   # /
-    MODULO = auto()   # %
-    EXPONENT = auto() # ** 
+    PLUS = "+"
+    MINUS = "-"
+    MULTIPLY = "*"
+    DIVIDE = "/"
+    MODULO = "%"
+    EXPONENT = "**" 
 
 class LogicalOperator(StrEnum):
     """Enum representing logical operators in basic-pp."""
@@ -76,22 +76,22 @@ class BitwiseOperator(StrEnum):
 
 class ComparisonOperator(StrEnum):
     """Enum representing comparison operators in basic-pp."""
-    EQ = auto()  # ==
-    NEQ = auto() # !=
-    LT = auto()  # <
-    GT = auto()  # >
-    LTE = auto() # <=
-    GTE = auto() # >=
+    EQ = "=="
+    NEQ = "!="
+    LT = "<"
+    GT = ">"
+    LTE = "<="
+    GTE = ">="
 
 class AssignmentOperator(StrEnum):
     """Enum representing assignment operators in basic-pp."""
-    ASSIGN = auto()     # =
-    ADD_ASSIGN = auto() # +=
-    SUB_ASSIGN = auto() # -=
-    MUL_ASSIGN = auto() # *=
-    DIV_ASSIGN = auto() # /=
-    MOD_ASSIGN = auto() # %=
-    EXP_ASSIGN = auto() # **=
+    ASSIGN = "="
+    ADD_ASSIGN = "+="
+    SUB_ASSIGN = "-="
+    MUL_ASSIGN = "*="
+    DIV_ASSIGN = "/="
+    MOD_ASSIGN = "%="
+    EXP_ASSIGN = "**="
 
 class MiscOperator(StrEnum):
     """Special or miscellaneous operators."""
@@ -104,16 +104,16 @@ class MiscOperator(StrEnum):
 
 class Delimiters(StrEnum):
     """Enum representing delimiters in basic-pp."""
-    LEFT_PAREN = auto()    # (
-    RIGHT_PAREN = auto()   # )
-    LEFT_BRACE = auto()    # {
-    RIGHT_BRACE = auto()   # }
-    LEFT_BRACKET = auto()  # [
-    RIGHT_BRACKET = auto() # ]
-    SEMICOLON = auto()     # ;
-    COMMA = auto()         # ,
-    DOT = auto()           # .
-    COLON = auto()         # :
+    LEFT_PAREN = "("
+    RIGHT_PAREN = ")"
+    LEFT_BRACE = "{"
+    RIGHT_BRACE = "}"
+    LEFT_BRACKET = "["
+    RIGHT_BRACKET = "]"
+    SEMICOLON = ";"
+    COMMA = ","
+    DOT = "."
+    COLON = ":"
 
 
 class TokenType(StrEnum):

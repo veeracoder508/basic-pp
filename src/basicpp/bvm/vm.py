@@ -5,6 +5,7 @@ This module executes the bytecode produced by the compiler.
 
 import sys
 from typing import Any, List, Dict, Tuple
+from pprint import pprint
 
 
 class BVM:
@@ -100,6 +101,36 @@ class BVM:
                 a = self.pop()
                 self.push(a % b)
 
+            elif op == 'BINARY_AND':
+                b = self.pop()
+                a = self.pop()
+                self.push(a & b)
+            
+            elif op == 'BINARY_OR':
+                b = self.pop()
+                a = self.pop()
+                self.push(a | b)
+            
+            elif op == 'BINARY_XOR':
+                b = self.pop()
+                a = self.pop()
+                self.push(a ^ b)
+
+            elif op == 'BINARY_LSHIFT':
+                b = self.pop()
+                a = self.pop()
+                self.push(a << b)
+
+            elif op == 'BINARY_RSHIFT':
+                b = self.pop()
+                a = self.pop()
+                self.push(a >> b)
+
+            elif op == 'BINARY_POWER':
+                b = self.pop()
+                a = self.pop()
+                self.push(a ** b)
+
             elif op.startswith('COMPARE_'):
                 b = self.pop()
                 a = self.pop()
@@ -151,7 +182,7 @@ class BVM:
             self.ip += 1
 
 
-def main():
+def main(): 
     from basicpp.compiler import compile_source
 
     # A small integrated test to verify the BVM works as expected
@@ -165,6 +196,11 @@ def main():
     """
     print("Running BVM Self-Test...")
     bc = compile_source(test_src)
+    print("===== SOURCE =====")
+    print(test_src)
+    print("===== BYTECODE =====")
+    pprint(bc)
+    print("===== OUTPUT =====")
     BVM(bc).run()
 
 if __name__ == '__main__':
