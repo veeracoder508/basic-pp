@@ -63,17 +63,20 @@ class BVM:
                 self.variables[arg] = self.pop()
             
             elif op == 'READ_INPUT':
-                val = input()
+                sys.stdout.flush()
+                val = input(arg)
                 # Attempt basic type conversion
                 try:
-                    if '.' in val: val = float(val)
-                    else: val = int(val)
+                    if '.' in val:
+                        val = float(val)
+                    else:
+                        val = int(val)
                 except ValueError:
                     pass
                 self.push(val)
 
             elif op == 'PRINT_ITEM':
-                print(self.pop(), end=' ')
+                print(self.pop(), end=' ', flush=True)
             
             elif op == 'PRINT_NEWLINE':
                 print()

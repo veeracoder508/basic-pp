@@ -54,6 +54,7 @@ class Program:
 @dataclass
 class Input:
     target: Identifier
+    prompt: str | None = None
     dtype: str | None = None
 
 @dataclass
@@ -215,8 +216,18 @@ class Parser:
 		return Assign(target, value)
 
 	def parse_input(self) -> Input:
-		# INPUT <identifier> [$TYPE] ;
+		# INPUT ["prompt",] <identifier> [$TYPE] ;
 		self.expect(TokenType.KEYWORD, self.current().value)
+		
+		prompt = None
+		# Check for an optional prompt string literal (stored as VALUE by the lexer)
+		if self.current().type == TokenType.VALUE:
+			prompt = str(self.current().value)
+			self.advance()
+			# Optional comma after the prompt
+			if self.current().type == TokenType.DELIMITER and self.current().value == ',':
+				self.advance()
+
 		ident_tok = self.expect(TokenType.IDENTIFIER)
 		target = Identifier(ident_tok.value)
 		dtype = None
@@ -229,7 +240,7 @@ class Parser:
 		else:
 			tok = self.current()
 			raise ParseError(f"Expected ';' after INPUT at {tok.line}:{tok.column}")
-		return Input(target, dtype)
+		return Input(target, prompt, dtype)
 
 	def parse_if(self) -> IfStmt:
 		self.expect(TokenType.KEYWORD, 'IF')
@@ -473,7 +484,7 @@ class Emitter:
 			idx = self.add_name(node.target.name)
 			self.emit('STORE_NAME', node.target.name)
 		elif isinstance(node, Input):
-			self.emit('READ_INPUT', node.target.name)
+			self.emit('READ_INPUT', node.prompt if node.prompt is not None else "")
 			self.emit('STORE_NAME', node.target.name)
 		elif isinstance(node, IfStmt):
 			self.compile(node.condition)

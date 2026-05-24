@@ -1,5 +1,5 @@
 START ;
-INPUT name $STRING ;
 PRINT "Enter your name:" ;
+INPUT name $STRING ;
 PRINT "Hello,", name ;
 END ;
