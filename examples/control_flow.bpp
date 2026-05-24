@@ -1,5 +1,4 @@
-// Demonstrating IF-THEN-ELSE and Comparisons
-START
+START ;
 SET score $INT = 85 ;
 
 PRINT "Your score is:", score ;
@@ -11,4 +10,4 @@ ELSE
         PRINT "Grade: B" ;
     ENDIF ;
 ENDIF ;
-END
+END ;

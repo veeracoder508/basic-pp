@@ -142,6 +142,12 @@ class Parser:
 				if kw in ('START', 'END'):
 					self.advance()
 					continue
+
+			# Allow standalone semicolons (empty statements or extra terminators)
+			if self.current().type == TokenType.DELIMITER and self.current().value == ';':
+				self.advance()
+				continue
+
 			if self.current().type == TokenType.IDENTIFIER:
 				# assignment if followed by operator '='
 				look = self.tokens[self.pos + 1] if (self.pos + 1) < len(self.tokens) else None
@@ -284,12 +290,15 @@ class Parser:
 
 	def parse_statement(self):
 		# Helper to parse a single statement inside blocks
-		kw_map = {'PRINT': self.parse_print, 'SET': self.parse_set, 'INPUT': self.parse_input, 'GOTO': self.parse_goto}
+		kw_map = {'PRINT': self.parse_print, 'SET': self.parse_set, 'INPUT': self.parse_input, 'GOTO': self.parse_goto, 'IF': self.parse_if, 'FOR': self.parse_for}
 		if self.current().type == TokenType.KEYWORD:
 			func = kw_map.get(self.current().value.upper())
 			if func: return func()
 		if self.current().type == TokenType.IDENTIFIER:
 			return self.parse_assign()
+		if self.current().type == TokenType.DELIMITER and self.current().value == ';':
+			self.advance()
+			return None # Treat as a null statement
 		raise ParseError(f"Expected statement at {self.current().line}:{self.current().column}")
 
 	# --- Expression parsing with Precedence ---
@@ -482,6 +491,28 @@ class Emitter:
 				self.emit('LABEL', endif_label)
 			else:
 				self.emit('LABEL', endif_label)
+		elif isinstance(node, ForStmt):
+			label_suffix = str(id(node))
+			start_label = f"FOR_START_{label_suffix}"
+			end_label = f"FOR_END_{label_suffix}"
+
+			# Initialize: var = start_val
+			self.compile(Assign(node.variable, node.start_val))
+			self.emit('LABEL', start_label)
+
+			# Condition: var <= end_val
+			self.compile(node.variable)
+			self.compile(node.end_val)
+			self.emit('COMPARE_LTE', None)
+			self.emit('JUMP_IF_FALSE', end_label)
+
+			for stmt in node.body:
+				if stmt: self.compile(stmt)
+
+			# Increment: var = var + step_val
+			self.compile(Assign(node.variable, BinOp(node.variable, '+', node.step_val)))
+			self.emit('JUMP', start_label)
+			self.emit('LABEL', end_label)
 		elif isinstance(node, LabelStmt):
 			self.emit('LABEL', node.name)
 		elif isinstance(node, GotoStmt):

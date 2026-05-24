@@ -1,7 +1,8 @@
 from . import BVM
 from .compiler import compile_source
 import argparse
-
+import os
+from pprint import pprint
 
 parser = argparse.ArgumentParser(
     prog="basicpp",
@@ -13,7 +14,14 @@ parser.add_argument('src_file',
                     help='the source(.bpp)/byte(.bc) code')
 parser.add_argument('-v', '--verbose', 
                     action='store_const',
+                    dest='verbose',
+                    const=True,
                     help='increase output verbosity')
+parser.add_argument('-b',
+                    action='store_const',
+                    const=True,
+                    dest='bytecode',
+                    help='display the byte code.')
 
 args = parser.parse_args()
 
@@ -29,7 +37,10 @@ def run_bc(src: str) -> str:
     return compile_source(src)
 
 def run_bpp(src: str) -> None:
-    return BVM(run_bc(src)).run()
+    return BVM(compile_source(src)).run()
+
+def disp_bytecode(src: str) -> str:
+    return compile_source(src)
 
 
 def cli():
@@ -37,21 +48,33 @@ def cli():
     Usage:
     >>> basicpp <filename>
     """
+    if not os.path.exists(args.src_file):
+        print(f"Error: File '{args.src_file}' not found.")
+        return
+
+    with open(args.src_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+
     file_ex = file_extension(args.src_file)
 
     if args.verbose:
         print(f"file_name: {args.src_file}")
         print(f"file_extension: {file_ex}")
 
-    if file_ex == 'BPP':
-        if args.verbose:
-            print("===== SOURCE =====")
-            print(args.src_file)
-            print("===== BYTECODE =====")
-            print(run_bc(args.src_file))
-            print("===== OUTPUT =====")
-        run_bc(args.src_file)
-    elif file_ex == 'BC':
-        run_bpp(args.src_file)
+    if args.bytecode:
+        print(disp_bytecode(content))
     else:
-        raise ValueError(f"Invalid file extension: {file_ex(args.src_file)}")
+        if file_ex == 'BPP':
+            if args.verbose:
+                print("===== SOURCE =====")
+                print(content)
+                print("===== BYTECODE =====")
+                pprint(run_bc(content))
+                print("===== OUTPUT =====")
+            run_bpp(content)
+        elif file_ex == 'BC':
+            # Currently, the VM expects a bytecode dictionary. 
+            # If .bc files are raw source, we run them; otherwise, a loader is needed.
+            run_bpp(content)
+        else:
+            raise ValueError(f"Invalid file extension: {file_ex}")

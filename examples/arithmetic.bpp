@@ -1,5 +1,4 @@
 START ;
-# arithmetic with decimal, hex, bin, oct
 x = 1 + 2 * 3 ;
 y = 0x10 + 0b10 + 0o7 ;
 PRINT "x:", x, "y:", y ;
