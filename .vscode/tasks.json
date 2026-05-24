@@ -19,6 +19,7 @@
     {
       "label": "Run Dev Install Script",
       "type": "shell",
+      "isBackground": true,
       "command": "uv pip install .",
       "group": {
         "kind": "build",
