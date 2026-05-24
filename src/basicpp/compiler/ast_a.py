@@ -557,11 +557,11 @@ class Emitter:
 			for v in node.values:
 				self.compile(v)
 				self.emit('PRINT_ITEM', None)
+			self.emit('PRINT_NEWLINE', None)
 		elif isinstance(node, Println):
 			for v in node.values:
 				self.compile(v)
 				self.emit('PRINT_ITEM', None)
-			self.emit('PRINT_NEWLINE', None)
 		elif isinstance(node, BinOp):
 			self.compile(node.left)
 			self.compile(node.right)
