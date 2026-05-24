@@ -25,6 +25,7 @@ class Keywords(StrEnum):
     FUNCTION = auto()
     RETURN = auto()
     PRINT = auto()
+    PRINTLN = auto()
     TRUE = auto()
     FALSE = auto()
     NULL = auto()

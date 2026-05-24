@@ -47,6 +47,11 @@ class Print:
 
 
 @dataclass
+class Println:
+	values: List[Any]
+
+
+@dataclass
 class Program:
     body: List[Any]
 
@@ -124,6 +129,9 @@ class Parser:
 				if kw == 'PRINT':
 					stmts.append(self.parse_print())
 					continue
+				if kw == 'PRINTLN':
+					stmts.append(self.parse_println())
+					continue
 				if kw == 'SET':
 					stmts.append(self.parse_set())
 					continue
@@ -164,6 +172,23 @@ class Parser:
 		return Program(stmts)
 
 	def parse_print(self) -> Print:
+		self.expect(TokenType.KEYWORD, self.current().value)
+		values = []
+		while True:
+			values.append(self.parse_expr())
+			if self.current().type == TokenType.DELIMITER and self.current().value == ',':
+				self.advance()
+				continue
+			break
+		# expect semicolon
+		if self.current().type == TokenType.DELIMITER and self.current().value == ';':
+			self.advance()
+		else:
+			tok = self.current()
+			raise ParseError(f"Expected ';' after PRINT at {tok.line}:{tok.column}")
+		return Print(values)
+	
+	def parse_println(self) -> Println:
 		self.expect(TokenType.KEYWORD, self.current().value)
 		values = []
 		while True:
@@ -301,7 +326,7 @@ class Parser:
 
 	def parse_statement(self):
 		# Helper to parse a single statement inside blocks
-		kw_map = {'PRINT': self.parse_print, 'SET': self.parse_set, 'INPUT': self.parse_input, 'GOTO': self.parse_goto, 'IF': self.parse_if, 'FOR': self.parse_for}
+		kw_map = {'PRINT': self.parse_print, 'PRINTLN': self.parse_println, 'SET': self.parse_set, 'INPUT': self.parse_input, 'GOTO': self.parse_goto, 'IF': self.parse_if, 'FOR': self.parse_for}
 		if self.current().type == TokenType.KEYWORD:
 			func = kw_map.get(self.current().value.upper())
 			if func: return func()
@@ -532,6 +557,10 @@ class Emitter:
 			for v in node.values:
 				self.compile(v)
 				self.emit('PRINT_ITEM', None)
+		elif isinstance(node, Println):
+			for v in node.values:
+				self.compile(v)
+				self.emit('PRINT_ITEM', None)
 			self.emit('PRINT_NEWLINE', None)
 		elif isinstance(node, BinOp):
 			self.compile(node.left)
@@ -582,11 +611,21 @@ def compile_source(source: str) -> Dict[str, List[Tuple[str, Any]] | List[Any] |
 
 
 def write_bytecode_to_file(file_name: str, content: Dict[str, List[Tuple[str, Any]] | List[Any] | List[str]]):
-	os.makedirs("__basicpp__", exist_ok=True)
-	with open(f"__basicpp__/{file_name}", 'w', encoding='utf-8') as f:
-		for i, (op, arg) in enumerate(content.get('code', [])):
-			arg_str = str(arg) if arg is not None else ""
-			f.write(f"{i*2:>4} {op:<20} {arg_str}\n")
+    # 1. Handle nested directories safely
+    dirname = os.path.dirname(file_name)
+    if dirname:
+        os.makedirs(os.path.join("__basicpp__", dirname), exist_ok=True)
+        
+    # 2. Open file using os.path.join for cross-platform safety
+    full_path = os.path.join("__basicpp__", file_name)
+    with open(full_path, 'w', encoding='utf-8') as f:
+        # 3. Unpack carefully in case 'arg' is missing from the tuple
+        for i, item in enumerate(content.get('code', [])):
+            op = item[0]
+            arg = item[1] if len(item) > 1 else None
+            
+            arg_str = str(arg) if arg is not None else ""
+            f.write(f"{i*2:>4} {op:<20} {arg_str}\n")
 
 
 def main():

@@ -126,3 +126,14 @@ def test_input_statement_string(capsys, monkeypatch):
     run_src(src)
     captured = capsys.readouterr()
     assert captured.out.strip() == "Hello, World"
+
+def test_println_statement(capsys):
+    src = """
+    START
+    PRINTLN "Hello, World!" ;
+    PRINTLN "This is a new line!!!" ;
+    END
+    """
+    run_src(src)
+    captured = capsys.readouterr()
+    assert captured.out.strip() == "Hello, World! \nThis is a new line!!!"
