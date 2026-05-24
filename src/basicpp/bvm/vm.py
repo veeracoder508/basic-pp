@@ -9,6 +9,8 @@ from pprint import pprint
 
 
 class BVM:
+    """The VM for the Basic++ language."""
+
     def __init__(self, bytecode: Dict[str, Any]):
         """
         Initializes the VM with the bytecode dictionary.

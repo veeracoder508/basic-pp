@@ -110,9 +110,10 @@ class DocsBuilder:
         CommandRunner.run(command, "Build API Docs (pdoc3)")
 
     def build_user_docs(self):
-        """Generates user documentation using Zensical."""
-        command = ["zensical", "build"]
-        CommandRunner.run(command, "Build User Docs (Zensical)")
+        """Generates user documentation using Zensical if `docs.yml` is not found in .github/workflows."""
+        if not Path(".github/workflows/docs.yml").exists():
+            command = ["zensical", "build"]
+            CommandRunner.run(command, "Build User Docs (Zensical)")
 
 
 class ChangelogGenerator:

@@ -11,7 +11,7 @@
 # The site_name is shown in the page header and the browser window title
 #
 # Read more: https://zensical.org/docs/setup/basics/#site_name
-site_name = "Documentation"
+site_name = "Basic++ docs"
 
 # The site_description is included in the HTML head and should contain a
 # meaningful description of the site content for use by search engines.
@@ -37,13 +37,15 @@ copyright = """
 Copyright &copy; 2026 R A Veeraragavan. All rights reserved.
 """
 
+repo_url = "https://github.com/veeracoder508/basic-pp"
+repo_name = "veeracoder508/basic-pp"
+
 # UNTOUCHED NAVIGATION STRUCTURE
 nav = [
   { "Home" = "index.md" },
-  { "Markdown in 5min" = "markdown.md" },
   { "Dev docs" = [
-    "dev_docs/BLUEPRINT.md",
-    "dev_docs/GRAMMER.md"
+    { "Blueprint" = "dev_docs/BLUEPRINT.md" },
+    { "Grammar" = "dev_docs/GRAMMER.md" }
   ]}
 ]
 
@@ -65,10 +67,14 @@ nav = [
 # Read more: https://zensical.org/docs/customization/#additional-javascript
 #extra_javascript = ["javascripts/extra.js"]
 
+extra_html = [""]
+
 # ----------------------------------------------------------------------------
 # Section for configuring theme options
 # ----------------------------------------------------------------------------
 [project.theme]
+
+custom_dir = "overrides"
 
 # Explicitly forcing the modern variant used by zensical.org
 variant = "modern"
@@ -114,13 +120,15 @@ features = [
     "navigation.instant",
     "navigation.instant.prefetch",
     "navigation.path",
-    "navigation.sections",
     "navigation.top",
     "navigation.tracking",
     "search.highlight",
     
     # Active table of contents tracking on the right column
     "toc.follow",
+    "navigation.tabs",
+
+    "navigation.path",
 ]
 
 # ----------------------------------------------------------------------------
@@ -148,24 +156,35 @@ code = "Jetbrains Mono"
 # ----------------------------------------------------------------------------
 # Color palette setups for system-preferred Dark / Light themes
 # ----------------------------------------------------------------------------
+# Palette toggle for automatic mode
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+# Palette toggle for light mode
 [[project.theme.palette]]
 media = "(prefers-color-scheme: light)"
 scheme = "default"
 toggle.icon = "lucide/sun"
 toggle.name = "Switch to dark mode"
 
+# Palette toggle for dark mode
 [[project.theme.palette]]
 media = "(prefers-color-scheme: dark)"
 scheme = "slate"
 toggle.icon = "lucide/moon"
-toggle.name = "Switch to light mode"
+toggle.name = "Switch to system preference"
+
+[[project.theme.palette]]
+scheme = "slate"
 
 # ----------------------------------------------------------------------------
 # The "extra" section contains miscellaneous settings.
 # ----------------------------------------------------------------------------
 [[project.extra.social]]
 icon = "fontawesome/brands/github"
-link = "https://github.com/veeracoder508/basic-pp"
+link = "https://github.com/veeracoder508"
 
 # ----------------------------------------------------------------------------
 # Markdown extensions mapping
@@ -211,3 +230,6 @@ alternate = [
     { name = "English", link = "/en/", lang = "en" },
     { name = "Tamil", link = "/ta/", lang = "ta" }
 ]
+
+[project.extra.version]
+provider = "mike"

@@ -1,3 +1,7 @@
+---
+icon: lucide/book-text
+---
+
 # Grammer
 ## Types
 - `$STR`: string

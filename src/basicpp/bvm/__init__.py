@@ -1,3 +1,3 @@
 """The Basic Virtual Machine implementation."""
 
-from . import vm
+from .vm import BVM

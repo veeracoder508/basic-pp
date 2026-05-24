@@ -1,3 +1,7 @@
+---
+icon: lucide/scroll-text
+---
+
 # Architecture
 ![compiler_architecture_diagram.svg](compiler_architecture_diagram.svg)
 
