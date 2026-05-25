@@ -1,7 +1,10 @@
 ---
-icon: lucide/rocket
+title: home
 ---
 
-# Get started
+# basic++
+An simple language for beginners.
 
-For full developer documentation visit [zensical.org](http://veeracoder508.github.io/basic-pp/dev_docs/).
+## how it works??
+Basic++ is like python-compiles an byte code and then interpret the byte code.
+The byte code is in the same style like python's.

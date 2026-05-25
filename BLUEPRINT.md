@@ -1,7 +1,7 @@
 # Architecture
-![compiler_architecture_diagram.svg](compiler_architecture_diagram.svg)
+![compiler_architecture_diagram.svg](basicpp_swimlane_architecture.svg)
 
-- **Front end** (blue) — handles your source text. **The lexer** scans characters and produces tokens (keywords, identifiers, numbers, operators). The **parser** takes those tokens and builds an **AST** (abstract syntax tree) by applying your grammar rules.
+- **Front end** — handles source text. The **Lexer** (`lexer.py`) scans characters and produces `Token` objects. The **Parser** (`ast_a.py`) processes tokens into an Abstract Syntax Tree (AST).
 
 - **Middle end** (purple) — works on meaning and structure. **Semantic analysis** checks types, resolves variable scopes, and builds a symbol table. **IR generation** converts the AST into a platform-neutral intermediate form (like three-address code or SSA).
 

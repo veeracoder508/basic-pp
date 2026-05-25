@@ -114,6 +114,8 @@ class DocsBuilder:
         if not Path(".github/workflows/docs.yml").exists():
             command = ["zensical", "build"]
             CommandRunner.run(command, "Build User Docs (Zensical)")
+        else:
+            logger.info("github workflow is found for zensical, skipping build.")
 
 
 class ChangelogGenerator:

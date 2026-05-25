@@ -2,18 +2,18 @@
 icon: lucide/book-text
 ---
 
-# Grammer
+# Grammar
 ## Types
 - `$STR`: string
     ```
     "hello", "hello123", "hello world", "123", "!@#$#%##$@123df"
     ```
-    Can contain alphabets, numbers, spesial characters inside double quots (`""`).
+    Can contain alphabets, numbers, special characters inside double quotes (`""`).
 
 - `$INT`: integer
     ```
     123, 1000, 1343747
-    ```
+    ``` 
     Can contain only numbers.
 
 - `$BOOL`: boolean
@@ -49,11 +49,11 @@ icon: lucide/book-text
     ```
     'a', '1', '%'
     ```
-    Can contain only one character of alphabets, numbers, spesial characters inside single quots (`''`).
+    Can contain only one character of alphabets, numbers, special characters inside single quotes (`''`).
 
 ## syntax
 1. Each line must end with a space and a  semi colon ( ` ;` ).
-2. The start of the bolck thet is to be executed must start with `START` statement.
+2. The start of the block that is to be executed must start with `START` statement.
 3. Every script must end with a `END` statement.
 4. If the execution of a code have to be ended in between, the `END` statement.
 5. Variable name can only contain alphabet (*a-z, A-Z*), number (*0-9*) and a under score (*_*), can't start with a number.
@@ -147,9 +147,9 @@ icon: lucide/book-text
 4. `GOTO` - To jump to a label.
     ```
     # syntax:
-    <lable_name>: <statement> ;
+    <label_name>: <statement> ;
     ...
-    GOTO <lable_name> ;
+    GOTO <label_name> ;
     ```
    
 5. `IF-THEN-ELSE` - To check a condition.
