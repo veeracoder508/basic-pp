@@ -12,7 +12,7 @@ basicpp main.bpp
 ```
 
 ## usage
-```basicpp [options] <filename>```
+```bpp [options] <filename>```
 
 ### options/positional arguments
 | command/argument | description |

@@ -106,14 +106,21 @@ class DocsBuilder:
 
     def build_api_docs(self):
         """Generates API documentation using pdoc3."""
-        # Using sys.executable -m pdoc ensures the pdoc module is called from the correct 
-        # environment and avoids potential PATH conflicts where 'pdoc' might resolve to 'basicpp'.
+        # Dynamically find the source directory matching the module name,
+        # falling back safely to 'src/basicpp' if the folder doesn't use underscores.
+        module_path = f"src/{self.module_name}"
+        if not Path(module_path).exists() and Path("src/basicpp").exists():
+            module_path = "src/basicpp"
+
+        # Explicitly invoking via sys.executable avoids environment PATH hijacking
         command = [
-            sys.executable, "-m", "pdoc",
+            sys.executable,
+            "-m",
+            "pdoc",
             "--html",
             "--output-dir", self.pdoc_output_dir,
             "--force", 
-            "src"
+            module_path
         ]
         CommandRunner.run(command, "Build API Docs (pdoc3)")
 
@@ -146,7 +153,18 @@ class ChangelogGenerator:
         command = ["git", "log", revision_range, "--oneline"]
         commits = CommandRunner.run(command, f"Fetch Git Commits for {version}")
 
+        # Ensure the documentation directory exists before appending files
+        Path("docs").mkdir(parents=True, exist_ok=True)
+
         with open(self.output_file, "a") as f:
+            f.write(f"\n## Version {version}\n\n")
+            if commits.strip():
+                for line in commits.splitlines():
+                    f.write(f"* {line}\n")
+            else:
+                f.write("* No significant changes or first release.\n")
+
+        with open("docs/changelog.md", "a") as f:
             f.write(f"\n## Version {version}\n\n")
             if commits.strip():
                 for line in commits.splitlines():

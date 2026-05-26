@@ -39,7 +39,7 @@ dev = [
 ]
 
 [project.scripts]
-basicpp = "basicpp.cli:cli"
+bpp = "basicpp.cli:cli"
 
 [tool.setuptools.packages.find]
 where = ["src"]

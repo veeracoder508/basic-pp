@@ -15,3 +15,6 @@ wheels/
 # basicpp
 __basicpp__/
 *.bc
+
+# pdoc
+my_temp/

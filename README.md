@@ -2,7 +2,7 @@
 An simple language for beginners.
 
 ## usage
-basicpp [options] \<filename\>
+bpp \[options\] \<filename\>
 
 ### positional arguments:
   - **src_file**          the source(.bpp)/byte(.bc) code
