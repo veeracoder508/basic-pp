@@ -12,7 +12,7 @@ logging.basicConfig(
     level="INFO",
     format="%(message)s",
     datefmt="[%X]",
-    handlers=[RichHandler(rich_tracebacks=True, show_path=False)]
+    handlers=[RichHandler(rich_tracebacks=True, show_path=True)]
 )
 logger = logging.getLogger("build_script")
 
@@ -106,7 +106,15 @@ class DocsBuilder:
 
     def build_api_docs(self):
         """Generates API documentation using pdoc3."""
-        command = ["pdoc", "--html", "--output-dir", self.pdoc_output_dir, "--force", "."]
+        # Using sys.executable -m pdoc ensures the pdoc module is called from the correct 
+        # environment and avoids potential PATH conflicts where 'pdoc' might resolve to 'basicpp'.
+        command = [
+            sys.executable, "-m", "pdoc",
+            "--html",
+            "--output-dir", self.pdoc_output_dir,
+            "--force", 
+            "src"
+        ]
         CommandRunner.run(command, "Build API Docs (pdoc3)")
 
     def build_user_docs(self):
